@@ -46,10 +46,13 @@ export function AuthScreen() {
     Animated.timing(sentFade, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   };
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // ─── Handlers ────────────────────────────────────────────
   const sendLink = async () => {
     if (!email.trim()) return;
     setLoading(true);
+    setErrorMessage(null);
 
     const redirectTo =
       Platform.OS === 'web' && typeof window !== 'undefined'
@@ -63,7 +66,10 @@ export function AuthScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Magic link failed', error.message);
+      setErrorMessage(error.message);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Magic link failed', error.message);
+      }
     } else {
       setStep('sent');
       animateToSent();
@@ -174,6 +180,14 @@ export function AuthScreen() {
                 <Text style={[styles.instruction, { color: c.textMuted }]}>
                   Enter your email to sign in or create an account
                 </Text>
+
+                {errorMessage ? (
+                  <View style={[styles.configBanner, { backgroundColor: isDark ? 'rgba(225,132,132,0.15)' : 'rgba(161,62,62,0.1)' }]}>
+                    <Text style={[styles.configText, { color: c.danger }]}>
+                      ⚠️ {errorMessage}
+                    </Text>
+                  </View>
+                ) : null}
 
                 {!hasSupabaseConfig && (
                   <View style={[styles.configBanner, { backgroundColor: isDark ? 'rgba(225,132,132,0.1)' : 'rgba(161,62,62,0.08)' }]}>
