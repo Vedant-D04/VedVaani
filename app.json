@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "VedVaani",
+    "slug": "vedvaani",
+    "scheme": "vedvaani",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vedvaani.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "VedVaani records your live reading so you can share it with listeners."
+      }
+    },
+    "android": {
+      "package": "com.vedvaani.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
+      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+    }
+  }
+}
