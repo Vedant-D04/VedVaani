@@ -432,8 +432,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 20,
-    minHeight: 52,
-    outlineStyle: 'none' as any
+    minHeight: 52
   },
 
   // Send button

@@ -1,10 +1,10 @@
 import { Audio } from 'expo-av';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AudioPlayer } from '../components/AudioPlayer';
-import { BodyText, Button, Field, MutedText, Pill, Screen, Surface, Title } from '../components/Themed';
+import { BodyText, Button, Field, MutedText, Pill, Screen, SectionHeader, Surface, Title } from '../components/Themed';
 import { GENRES } from '../constants/genres';
-import { spacing } from '../constants/theme';
+import { radius, spacing } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { BookSuggestion, searchBooks } from '../lib/books';
@@ -60,7 +60,7 @@ export function RecordScreen() {
   }, [bookTitle]);
 
   const meterBars = useMemo(() => {
-    return Array.from({ length: 18 }, (_, index) => 18 + ((seconds + index * 7) % 28));
+    return Array.from({ length: 24 }, (_, index) => 12 + ((seconds * 3 + index * 11) % 36));
   }, [seconds]);
 
   const startRecording = async () => {
@@ -119,7 +119,7 @@ export function RecordScreen() {
       setAuthorName('');
       setCaption('');
       reset();
-      Alert.alert('Posted', 'Your reading is live.');
+      Alert.alert('Posted! 🎉', 'Your voice reading is live on VedVaani.');
     } catch (error) {
       Alert.alert('Could not post reading', error instanceof Error ? error.message : 'Please try again.');
     } finally {
@@ -129,26 +129,66 @@ export function RecordScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Title>Record</Title>
-        <Surface style={styles.recorder}>
-          <MutedText>{isRecording ? `${MAX_SECONDS - seconds}s remaining` : 'One continuous live take, up to 60 seconds.'}</MutedText>
-          <View style={styles.meter}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <Title>Record Studio</Title>
+
+        {/* Recorder Hero Card */}
+        <Surface elevated style={styles.recorderCard}>
+          <Text style={[styles.timerDisplay, { color: isRecording ? theme.colors.danger : theme.colors.text }]}>
+            00:{String(seconds).padStart(2, '0')} <Text style={styles.maxTimer}>/ 01:00</Text>
+          </Text>
+          <MutedText style={styles.recorderSubtitle}>
+            {isRecording ? 'Recording live audio...' : audioUri ? 'Recording ready!' : 'One continuous take up to 60 seconds.'}
+          </MutedText>
+
+          {/* Meter visualization */}
+          <View style={styles.meterContainer}>
             {meterBars.map((height, index) => (
-              <View key={index} style={[styles.bar, { height: isRecording ? height : 12, backgroundColor: theme.colors.accent }]} />
+              <View
+                key={index}
+                style={[
+                  styles.bar,
+                  {
+                    height: isRecording ? height : 8,
+                    backgroundColor: isRecording ? theme.colors.accent : theme.colors.border
+                  }
+                ]}
+              />
             ))}
           </View>
-          {!isRecording && !audioUri ? <Button label="Start recording" onPress={startRecording} /> : null}
-          {isRecording ? <Button label="Stop" variant="danger" onPress={stopRecording} /> : null}
-          {audioUri ? (
-            <View style={styles.preview}>
+
+          {/* Record Control */}
+          {!audioUri ? (
+            <Pressable
+              onPress={isRecording ? stopRecording : startRecording}
+              style={({ pressed }) => [
+                styles.recordCircle,
+                {
+                  backgroundColor: isRecording ? theme.colors.danger : theme.colors.accent,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.95 : 1 }]
+                }
+              ]}
+            >
+              <Text style={styles.recordCircleIcon}>{isRecording ? '⏹' : '🎙️'}</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.previewBox}>
               <AudioPlayer uri={audioUri} durationSeconds={Math.max(1, seconds)} />
-              <Button label="Record again" variant="secondary" onPress={reset} />
+              <Button label="Re-record" variant="accentSoft" size="sm" onPress={reset} style={{ marginTop: spacing.sm }} />
             </View>
-          ) : null}
+          )}
         </Surface>
 
-        <Field placeholder="Book title" value={bookTitle} onChangeText={setBookTitle} />
+        {/* Passage Details Form */}
+        <SectionHeader title="Passage Details" subtitle="Help listeners find your reading" />
+
+        <Field
+          placeholder="Book Title"
+          value={bookTitle}
+          onChangeText={setBookTitle}
+          leftElement={<Text style={styles.fieldIcon}>📖</Text>}
+        />
         {bookSuggestions.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
             {bookSuggestions.map((book) => (
@@ -164,18 +204,45 @@ export function RecordScreen() {
             ))}
           </ScrollView>
         ) : null}
-        <Field placeholder="Author" value={authorName} onChangeText={setAuthorName} />
+
+        <Field
+          placeholder="Author Name"
+          value={authorName}
+          onChangeText={setAuthorName}
+          leftElement={<Text style={styles.fieldIcon}>✍️</Text>}
+        />
         {authorSuggestions.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-            {authorSuggestions.map((name) => <Pill key={name} label={name} onPress={() => setAuthorName(name)} />)}
+            {authorSuggestions.map((name) => (
+              <Pill key={name} label={name} onPress={() => setAuthorName(name)} />
+            ))}
           </ScrollView>
         ) : null}
-        <BodyText style={styles.label}>Genre</BodyText>
-        <View style={styles.genreWrap}>
-          {GENRES.map((item) => <Pill key={item} label={item} active={genre === item} onPress={() => setGenre(item)} />)}
+
+        <BodyText style={styles.sectionTitle}>Genre</BodyText>
+        <View style={styles.genreGrid}>
+          {GENRES.map((item) => (
+            <Pill key={item} label={item} active={genre === item} onPress={() => setGenre(item)} />
+          ))}
         </View>
-        <Field placeholder="Caption optional" value={caption} onChangeText={setCaption} multiline style={styles.caption} />
-        <Button label="Post reading" onPress={post} loading={posting} disabled={!audioUri || posting} />
+
+        <Field
+          placeholder="Add an optional caption or note..."
+          value={caption}
+          onChangeText={setCaption}
+          multiline
+          style={styles.captionField}
+        />
+
+        <Button
+          label="Publish Reading"
+          variant="primary"
+          size="lg"
+          onPress={post}
+          loading={posting}
+          disabled={!audioUri || posting}
+          style={{ marginTop: spacing.sm }}
+        />
       </ScrollView>
     </Screen>
   );
@@ -184,39 +251,79 @@ export function RecordScreen() {
 const styles = StyleSheet.create({
   content: {
     gap: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl + 40
   },
-  recorder: {
-    gap: spacing.md
+  recorderCard: {
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    gap: spacing.sm
   },
-  meter: {
-    minHeight: 56,
+  timerDisplay: {
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: -1
+  },
+  maxTimer: {
+    fontSize: 18,
+    fontWeight: '500',
+    opacity: 0.6
+  },
+  recorderSubtitle: {
+    fontSize: 13
+  },
+  meterContainer: {
+    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5
+    gap: 4,
+    marginVertical: spacing.sm
   },
   bar: {
-    width: 7,
-    borderRadius: 4
+    width: 5,
+    borderRadius: radius.pill
   },
-  preview: {
-    gap: spacing.md
+  recordCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4
+  },
+  recordCircleIcon: {
+    fontSize: 30,
+    color: '#FFF'
+  },
+  previewBox: {
+    width: '100%',
+    gap: spacing.xs
   },
   row: {
     gap: spacing.sm,
     paddingRight: spacing.md
   },
-  genreWrap: {
+  sectionTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    marginTop: spacing.xs
+  },
+  genreGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm
+    gap: spacing.xs
   },
-  label: {
-    fontWeight: '800'
+  fieldIcon: {
+    fontSize: 16,
+    marginRight: spacing.xs
   },
-  caption: {
-    minHeight: 88,
-    paddingTop: spacing.md
+  captionField: {
+    minHeight: 80,
+    paddingTop: spacing.sm
   }
 });

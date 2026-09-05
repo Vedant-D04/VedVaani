@@ -1,9 +1,9 @@
 import { Audio } from 'expo-av';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radius, spacing } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { BodyText, MutedText } from './Themed';
+import { MutedText } from './Themed';
 
 function formatTime(seconds: number) {
   const safe = Math.max(0, Math.round(seconds));
@@ -50,52 +50,77 @@ export function AudioPlayer({ uri, durationSeconds }: { uri: string; durationSec
   };
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surfaceMuted }]}>
       <Pressable
         onPress={toggle}
-        style={[styles.playButton, { backgroundColor: theme.colors.accent }]}
+        style={({ pressed }) => [
+          styles.playButton,
+          {
+            backgroundColor: theme.colors.accent,
+            opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.95 : 1 }]
+          }
+        ]}
         accessibilityRole="button"
         accessibilityLabel={isPlaying ? 'Pause reading' : 'Play reading'}
       >
-        <BodyText style={{ color: theme.colors.accentText, fontWeight: '800' }}>{isPlaying ? 'II' : '▶'}</BodyText>
+        <Text style={[styles.playIcon, { color: theme.colors.accentText }]}>
+          {isPlaying ? '⏸' : '▶'}
+        </Text>
       </Pressable>
       <View style={styles.progressWrap}>
-        <View style={[styles.track, { backgroundColor: theme.colors.surfaceMuted }]}>
-          <View style={[styles.progress, { backgroundColor: theme.colors.accent, width: `${progress * 100}%` }]} />
+        <View style={[styles.track, { backgroundColor: theme.colors.borderLight }]}>
+          <View style={[styles.progress, { backgroundColor: theme.colors.accent, width: `${Math.max(2, progress * 100)}%` }]} />
         </View>
-        <MutedText style={styles.time}>{formatTime(position / 1000)} / {formatTime(durationSeconds)}</MutedText>
+        <View style={styles.timeRow}>
+          <MutedText style={styles.time}>{formatTime(position / 1000)}</MutedText>
+          <MutedText style={styles.time}>{formatTime(durationSeconds)}</MutedText>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
+  container: {
     flexDirection: 'row',
     gap: spacing.md,
-    alignItems: 'center'
+    alignItems: 'center',
+    padding: spacing.sm,
+    paddingRight: spacing.md,
+    borderRadius: radius.lg
   },
   playButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center'
   },
+  playIcon: {
+    fontSize: 16,
+    fontWeight: '800'
+  },
   progressWrap: {
     flex: 1,
-    gap: spacing.sm
+    gap: 4
   },
   track: {
-    height: 8,
+    height: 6,
     borderRadius: radius.pill,
     overflow: 'hidden'
   },
   progress: {
-    height: '100%'
+    height: '100%',
+    borderRadius: radius.pill
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
   },
   time: {
-    fontSize: 13,
-    lineHeight: 18
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '600'
   }
 });

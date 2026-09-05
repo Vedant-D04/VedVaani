@@ -28,7 +28,7 @@ export type Post = {
   caption: string | null;
   duration_seconds: number;
   created_at: string;
-  profiles?: Pick<Profile, 'username' | 'avatar_url'> | null;
+  profiles?: Pick<Profile, 'id' | 'username' | 'avatar_url'> | null;
   likes?: { count: number }[];
   comments?: { count: number }[];
 };
@@ -39,5 +39,5 @@ export type Comment = {
   user_id: string;
   text: string;
   created_at: string;
-  profiles?: Pick<Profile, 'username' | 'avatar_url'> | null;
+  profiles?: Pick<Profile, 'id' | 'username' | 'avatar_url'> | null;
 };

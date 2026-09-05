@@ -4,12 +4,18 @@ import { Comment, Post, Profile } from '../types/models';
 
 const POST_SELECT = `
   *,
-  profiles:users(username, avatar_url),
+  profiles:users(id, username, avatar_url),
   likes(count),
   comments(count)
 `;
 
 export async function getCurrentProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
   if (error) throw error;
   return data;
@@ -31,10 +37,20 @@ export async function listPosts(search?: string): Promise<Post[]> {
   return data ?? [];
 }
 
+export async function listUserPosts(userId: string): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POST_SELECT)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function listPostComments(postId: string): Promise<Comment[]> {
   const { data, error } = await supabase
     .from('comments')
-    .select('*, profiles:users(username, avatar_url)')
+    .select('*, profiles:users(id, username, avatar_url)')
     .eq('post_id', postId)
     .order('created_at');
   if (error) throw error;
